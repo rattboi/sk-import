@@ -36,13 +36,12 @@ def get_artists(soup):
 
 def get_attrs(elem):
     form_attrs = filter(lambda x: x.has_attr('name'), elem.select('input'))
-    return [(x.attrs['name'],x.attrs['value']) for x in form_attrs]
+    return {x.attrs['name']: x.attrs['value'] for x in form_attrs}
 
 def track_artist(s, artist_to_track):
-    attr_map = {}
-    for (key,val) in artist_to_track[3]:
-        attr_map[key] = val
-    r = s.post(songkick_base_url + artist_to_track[2], data=json.dumps(attr_map), headers=headers)
+    r = s.post(songkick_base_url + artist_to_track[2], 
+               data=json.dumps(artist_to_track[3]), 
+               headers=headers)
 
 def levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
