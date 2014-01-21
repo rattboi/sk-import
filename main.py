@@ -35,13 +35,40 @@ payload = {'authenticity_token': auth_key,
            'commit': 'Log in'}
 r = s.post(createloginurl, data=payload)
 
-# Get artists related to given CLI argument 
-artists = s.get(queryurl)
-artist_soup = BeautifulSoup(artists.content)
+# Get artists related to given CLI argument
+artistspage = s.get(queryurl)
+artist_soup = BeautifulSoup(artistspage.content)
 
 def get_artists(soup):
     artist_names    = soup.select('li.artist > p.subject > a')
     artist_tracking = soup.select('input.artist')
     return [(artist_names[i].text, artist_tracking[i].attrs['value']) for i in range(len(artist_names))]
 
-print get_artists(artist_soup)
+artists = get_artists(artist_soup)
+
+if any(filter(lambda (x,y): y == u'Stop tracking', artists)):
+    print "Already tracking"
+else:
+    distances = [levenshtein(a,sys.argv[1]) for (a,b) in artists]
+    val, idx = min((val, idx) for (idx, val) in enumerate(distances))
+    #now we have the index of our most likely candidate. "Track it"
+
+def levenshtein(a,b):
+    "Calculates the Levenshtein distance between a and b."
+    n, m = len(a), len(b)
+    if n > m:
+        # Make sure n <= m, to use O(min(n,m)) space
+        a,b = b,a
+        n,m = m,n
+
+    current = range(n+1)
+    for i in range(1,m+1):
+        previous, current = current, [i]+[0]*n
+        for j in range(1,n+1):
+            add, delete = previous[j]+1, current[j-1]+1
+            change = previous[j-1]
+            if a[j-1] != b[i-1]:
+                change = change + 1
+            current[j] = min(add, delete, change)
+
+    return current[n]
