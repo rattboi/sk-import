@@ -107,11 +107,11 @@ def search_for_artist(s, queryurl):
     artist_soup = BeautifulSoup(artistspage.content)
     return artist_soup
 
-def attempt_to_track(s, artists):
+def attempt_to_track(s, artists, searchterm):
     if len(artists) == 0:
-        print "No Results"
+        print "No Results: " + searchterm
     elif any(filter(lambda (n,t,u,a): t == u'Stop tracking', artists)):
-        print "Already tracking"
+        print "Already tracking: " + searchterm
     else:
         distances = [levenshtein(n,searchterm) for (n,t,u,attrs) in artists]
         val, idx = min((val, idx) for (idx, val) in enumerate(distances))
@@ -123,4 +123,4 @@ password = getpass.getpass()
 s = do_login(username, password)
 artist_soup = search_for_artist(s, queryurl)
 artists = get_artists(artist_soup)
-attempt_to_track(s, artists)
+attempt_to_track(s, artists, searchterm)
