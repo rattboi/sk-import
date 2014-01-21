@@ -11,8 +11,8 @@ if len(sys.argv) < 2:
 basesessionurl = "https://www.songkick.com/session/"
 newloginurl    = basesessionurl + "new"
 createloginurl = basesessionurl + "create"
-basesearchstring = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
-queryurl = basesearchstring + urllib2.quote(sys.argv[1])
+basequerystring = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
+queryurl = basequerystring + urllib2.quote(sys.argv[1])
 
 re_authkey = re.compile("input name=\"authenticity_token\" type=\"hidden\" value=\"(.*)\"")
 
@@ -39,6 +39,9 @@ r = s.post(createloginurl, data=payload)
 artists = s.get(queryurl)
 artist_soup = BeautifulSoup(artists.content)
 
-artist_list = artist_soup.select('li.artist > p.subject > a')
-for a in artist_list:
-    print a.text
+def get_artists(soup):
+    artist_names    = soup.select('li.artist > p.subject > a')
+    artist_tracking = soup.select('input.artist')
+    return [(artist_names[i].text, artist_tracking[i].attrs['value']) for i in range(len(artist_names))]
+
+print get_artists(artist_soup)
