@@ -11,7 +11,7 @@ if len(sys.argv) != 3:
     sys.exit(1);
 else:
     username = sys.argv[1]
-    searchterm = sys.argv[2]
+    path = sys.argv[2]
 
 songkick_base_url = "https://www.songkick.com"
 basesessionurl    = "https://www.songkick.com/session/"
@@ -115,6 +115,7 @@ def attempt_to_track(s, artists, searchterm):
         val, idx = min((val, idx) for (idx, val) in enumerate(distances))
         #now we have the index of our most likely candidate. "Track it"
         track_artist(s, artists[idx])
+        print "Added: " + searchterm
 
 def get_dirs(path):
     return [f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f)) and not f.startswith('.')]
@@ -125,8 +126,11 @@ def build_query(artist):
 password = getpass.getpass()
 
 s = do_login(username, password)
-for artist_dir in get_dirs(path):
+artist_dirs = sorted(get_dirs(path))
+for idx, artist_dir in enumerate(artist_dirs):
+    if idx % 10 == 0:
+        print "%i / %i" % (idx, len(artist_dirs)) 
     queryurl = build_query(artist_dir)
     artist_soup = search_for_artist(s, queryurl)
     artists = get_artists(artist_soup)
-    attempt_to_track(s, artists, searchterm)
+    attempt_to_track(s, artists, artist_dir)
