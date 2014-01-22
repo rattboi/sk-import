@@ -108,14 +108,15 @@ def search_for_artist(s, queryurl):
 def attempt_to_track(s, artists, searchterm):
     if len(artists) == 0:
         print "No Results: " + searchterm
-    elif any(filter(lambda (n,t,u,a): t == u'Stop tracking', artists)):
-        print "Already tracking: " + searchterm
     else:
         distances = [levenshtein(n,searchterm) for (n,t,u,attrs) in artists]
         val, idx = min((val, idx) for (idx, val) in enumerate(distances))
         #now we have the index of our most likely candidate. "Track it"
-        track_artist(s, artists[idx])
-        print "Added: " + searchterm
+        if artists[idx][1] != u'Stop tracking':
+            track_artist(s, artists[idx])
+            print "Added: " + searchterm
+        else:
+            print "Already tracking: " + searchterm
 
 def get_dirs(path):
     return [f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f)) and not f.startswith('.')]
