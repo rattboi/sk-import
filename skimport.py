@@ -5,19 +5,19 @@ import requests
 import sys
 import getpass
 import json
+import os
 
-if len(sys.argv) < 3:
+if len(sys.argv) != 3:
     sys.exit(1);
 else:
     username = sys.argv[1]
-    searchterm = ' '.join(sys.argv[2:])
+    searchterm = sys.argv[2]
 
 songkick_base_url = "https://www.songkick.com"
-basesessionurl = "https://www.songkick.com/session/"
-newloginurl    = basesessionurl + "new"
-createloginurl = basesessionurl + "create"
-basequerystring = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
-queryurl = basequerystring + urllib2.quote(searchterm)
+basesessionurl    = "https://www.songkick.com/session/"
+newloginurl       = basesessionurl + "new"
+createloginurl    = basesessionurl + "create"
+basequerystring   = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
 
 ajax_headers = {'Content-Type':'application/json','Accept':'*/*','X-Requested-With':'XMLHttpRequest'}
 
@@ -116,9 +116,17 @@ def attempt_to_track(s, artists, searchterm):
         #now we have the index of our most likely candidate. "Track it"
         track_artist(s, artists[idx])
 
+def get_dirs(path):
+    return [f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f)) and not f.startswith('.')]
+
+def build_query(artist):
+    return basequerystring + urllib2.quote(artist)
+
 password = getpass.getpass()
 
 s = do_login(username, password)
-artist_soup = search_for_artist(s, queryurl)
-artists = get_artists(artist_soup)
-attempt_to_track(s, artists, searchterm)
+for artist_dir in get_dirs(path):
+    queryurl = build_query(artist_dir)
+    artist_soup = search_for_artist(s, queryurl)
+    artists = get_artists(artist_soup)
+    attempt_to_track(s, artists, searchterm)
