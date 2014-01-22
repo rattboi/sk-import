@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import urllib2
 import requests
 import sys
-import re
 import getpass
 import json
 
@@ -20,9 +19,7 @@ createloginurl = basesessionurl + "create"
 basequerystring = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
 queryurl = basequerystring + urllib2.quote(searchterm)
 
-re_auth_token = re.compile("input name=\"authenticity_token\" type=\"hidden\" value=\"(.*)\"")
-
-headers = {'Content-Type':'application/json','Accept':'*/*','X-Requested-With':'XMLHttpRequest'}
+ajax_headers = {'Content-Type':'application/json','Accept':'*/*','X-Requested-With':'XMLHttpRequest'}
 
 def get_artists(soup):
     artist_names    = soup.select('li.artist > p.subject > a')
@@ -41,7 +38,7 @@ def get_attrs(elem):
 def track_artist(s, artist_to_track):
     r = s.post(songkick_base_url + artist_to_track[2], 
                data=json.dumps(artist_to_track[3]), 
-               headers=headers)
+               headers=ajax_headers)
 
 def levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
@@ -75,7 +72,9 @@ def do_login(username, password):
         return None
 
     try:
-        auth_key = re_auth_token.findall(r.content)[0]
+        login_soup         = BeautifulSoup(r.content)
+        authenticity_token = login_soup.select('input[name="authenticity_token"]')
+        auth_key = authenticity_token[0].attrs['value']
     except:
         print "Couldn't find auth token in login page"
         return None
