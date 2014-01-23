@@ -105,24 +105,27 @@ def search_for_artist(s, queryurl):
     artist_soup = BeautifulSoup(artistspage.content)
     return artist_soup
 
+def cleanup(s):
+    return s.lower().replace('the ','',-1)
+
 def attempt_to_track(s, artists, searchterm):
     distance = ""
     trackstatus = ""
     if len(artists) == 0:
         trackstatus = "No Results" 
     else:
-        distances = [levenshtein(n,searchterm) for (n,t,u,attrs) in artists]
-        val, idx = min((val, idx) for (idx, val) in enumerate(distances))
+        distances = [levenshtein(cleanup(n),cleanup(searchterm)) for (n,t,u,attrs) in artists]
+        dist, idx = min((val, idx) for (idx, val) in enumerate(distances))
         #now we have the index of our most likely candidate. "Track it"
-        if val < 10: #arbitrary number at the moment
+        if dist < 10: #arbitrary number at the moment
             if artists[idx][1] != 'Stop tracking':
                 track_artist(s, artists[idx])
-                trackstatus = "Added as %s" % artists[idx][0]
+                trackstatus = "Added as {}".format(artists[idx][0])
             else:
-                trackstatus = "Already tracking as %s" % artists[idx][0]
+                trackstatus = "Already tracking as {}".format(artists[idx][0])
         else:
-            trackstatus = "Not adding. Too dissimilar. Closest = %s" % artists[idx][0]
-        distance = "Distance = %i" % val
+            trackstatus = "Skipping. Too dissimilar. Closest is {}".format(artists[idx][0])
+        distance = "Distance = {}".format(dist)
     print("{0: <50} : {1: <70} : {2:}".format(searchterm, trackstatus, distance))
 
 def get_dirs(path):
