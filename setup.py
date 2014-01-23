@@ -8,16 +8,15 @@ setup (
     author='rattboi',
     author_email='rattboi@gmail.com', # Removed to limit spam harvesting.
     url='http://github.com/rattboi/mopidy-subsonic/',
-    package_dir = {'': 'sk_import'}, # See packages below
     package_data = {'': ['*.xml']},
-    packages = find_packages("sk_import", exclude="tests"),
+    packages = find_packages(exclude="tests"),
     install_requires=[
         'beautifulsoup4',
         'requests',
     ],
     entry_points={
         'console_scripts': [
-                'sk_import = sk_import.main:main',
+                'sk-import = sk_import.main:main',
         ],
     },
     classifiers=[
