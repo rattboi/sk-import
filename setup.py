@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
  
 setup (
     name = 'sk-import',
-    version = '0.1',
+    version = '0.11',
     description="Bypass Songkick's import hard limit by hitting the site directly",
     long_description="Bypass Songkick's import hard limit by hitting the site directly",
     author='rattboi',
