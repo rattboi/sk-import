@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
-import urllib2
+import urllib.parse
 import requests
 import sys
 import getpass
@@ -11,7 +11,7 @@ if len(sys.argv) != 3:
     sys.exit(1);
 else:
     username = sys.argv[1]
-    searchterm = sys.argv[2]
+    path = sys.argv[2]
 
 songkick_base_url = "https://www.songkick.com"
 basesessionurl    = "https://www.songkick.com/session/"
@@ -68,7 +68,7 @@ def do_login(username, password):
     try:
         r = s.get(newloginurl)
     except:
-        print "Couldn't get to login page"
+        print("Couldn't get to login page")
         return None
 
     try:
@@ -76,7 +76,7 @@ def do_login(username, password):
         authenticity_token = login_soup.select('input[name="authenticity_token"]')
         auth_key = authenticity_token[0].attrs['value']
     except:
-        print "Couldn't find auth token in login page"
+        print("Couldn't find auth token in login page")
         return None
 
     # add authenticity token to login info, and login
@@ -90,11 +90,11 @@ def do_login(username, password):
     try:
         r = s.post(createloginurl, data=payload)
     except:
-        print "Couldn't log in"
+        print("Couldn't log in")
         return None
 
     if r.status_code != 200:
-        print "Some error logging in"
+        print("Some error logging in")
         return None
     else:
         return s
@@ -105,28 +105,43 @@ def search_for_artist(s, queryurl):
     artist_soup = BeautifulSoup(artistspage.content)
     return artist_soup
 
+def cleanup(s):
+    return s.lower().replace('the ','',-1)
+
 def attempt_to_track(s, artists, searchterm):
+    distance = ""
+    trackstatus = ""
     if len(artists) == 0:
-        print "No Results: " + searchterm
-    elif any(filter(lambda (n,t,u,a): t == u'Stop tracking', artists)):
-        print "Already tracking: " + searchterm
+        trackstatus = "No Results" 
     else:
-        distances = [levenshtein(n,searchterm) for (n,t,u,attrs) in artists]
-        val, idx = min((val, idx) for (idx, val) in enumerate(distances))
+        distances = [levenshtein(cleanup(n),cleanup(searchterm)) for (n,t,u,attrs) in artists]
+        dist, idx = min((val, idx) for (idx, val) in enumerate(distances))
         #now we have the index of our most likely candidate. "Track it"
-        track_artist(s, artists[idx])
+        if dist < 10: #arbitrary number at the moment
+            if artists[idx][1] != 'Stop tracking':
+                track_artist(s, artists[idx])
+                trackstatus = "Added as {}".format(artists[idx][0])
+            else:
+                trackstatus = "Already tracking as {}".format(artists[idx][0])
+        else:
+            trackstatus = "Skipping. Too dissimilar. Closest is {}".format(artists[idx][0])
+        distance = "Distance = {}".format(dist)
+    print("{0: <50} : {1: <70} : {2:}".format(searchterm, trackstatus, distance))
 
 def get_dirs(path):
     return [f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f)) and not f.startswith('.')]
 
 def build_query(artist):
-    return basequerystring + urllib2.quote(artist)
+    return basequerystring + urllib.parse.quote(artist)
 
 password = getpass.getpass()
 
 s = do_login(username, password)
-for artist_dir in get_dirs(path):
+artist_dirs = sorted(get_dirs(path))
+for idx, artist_dir in enumerate(artist_dirs):
+    if idx % 10 == 0:
+        print("{0}/{1}".format(idx, len(artist_dirs)))
     queryurl = build_query(artist_dir)
     artist_soup = search_for_artist(s, queryurl)
     artists = get_artists(artist_soup)
-    attempt_to_track(s, artists, searchterm)
+    attempt_to_track(s, artists, artist_dir)
