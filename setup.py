@@ -5,8 +5,8 @@ setup (
     version = '0.1',
     description="Bypass Songkick's import hard limit by hitting the site directly",
     long_description="Bypass Songkick's import hard limit by hitting the site directly",
-    author='Bradon Kanyid',
-    author_email='', # Removed to limit spam harvesting.
+    author='rattboi',
+    author_email='rattboi@gmail.com', # Removed to limit spam harvesting.
     url='http://github.com/rattboi/mopidy-subsonic/',
     package_dir = {'': 'sk_import'}, # See packages below
     package_data = {'': ['*.xml']},
