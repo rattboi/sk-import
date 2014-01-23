@@ -7,12 +7,6 @@ import getpass
 import json
 import os
 
-if len(sys.argv) != 3:
-    sys.exit(1);
-else:
-    username = sys.argv[1]
-    path = sys.argv[2]
-
 songkick_base_url = "https://www.songkick.com"
 basesessionurl    = "https://www.songkick.com/session/"
 newloginurl       = basesessionurl + "new"
@@ -134,14 +128,24 @@ def get_dirs(path):
 def build_query(artist):
     return basequerystring + urllib.parse.quote(artist)
 
-password = getpass.getpass()
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(1);
+    else:
+        username = sys.argv[1]
+        path = sys.argv[2]
 
-s = do_login(username, password)
-artist_dirs = sorted(get_dirs(path))
-for idx, artist_dir in enumerate(artist_dirs):
-    if idx % 10 == 0:
-        print("{0}/{1}".format(idx, len(artist_dirs)))
-    queryurl = build_query(artist_dir)
-    artist_soup = search_for_artist(s, queryurl)
-    artists = get_artists(artist_soup)
-    attempt_to_track(s, artists, artist_dir)
+    password = getpass.getpass()
+
+    s = do_login(username, password)
+    artist_dirs = sorted(get_dirs(path))
+    for idx, artist_dir in enumerate(artist_dirs):
+        if idx % 10 == 0:
+            print("{0}/{1}".format(idx, len(artist_dirs)))
+        queryurl = build_query(artist_dir)
+        artist_soup = search_for_artist(s, queryurl)
+        artists = get_artists(artist_soup)
+        attempt_to_track(s, artists, artist_dir)
+
+if __name__ == '__main__':
+    sys.exit(main())
