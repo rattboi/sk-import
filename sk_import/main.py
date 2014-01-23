@@ -7,6 +7,8 @@ import getpass
 import json
 import os
 
+__version__ = '0.11'
+
 songkick_base_url = "https://www.songkick.com"
 basesessionurl    = "https://www.songkick.com/session/"
 newloginurl       = basesessionurl + "new"
@@ -128,9 +130,17 @@ def get_dirs(path):
 def build_query(artist):
     return basequerystring + urllib.parse.quote(artist)
 
+def print_help():
+    print("{0} v{1}".format(sys.argv[0],__version__))
+    print("  To use: sk-import <username> <path>")
+    print("   where: <username> = SongKick username")
+    print("          <path>     = root directory containing subdirectories named after artists")
+    print("                       (Imagine the root of your music directory)")
+
 def main():
     if len(sys.argv) != 3:
-        sys.exit(1);
+        print_help()
+        sys.exit(1)
     else:
         username = sys.argv[1]
         path = sys.argv[2]
