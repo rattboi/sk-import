@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
  
 setup (
     name = 'sk-import',
-    version = '0.11',
+    version = '0.2',
     description="Bypass Songkick's import hard limit by hitting the site directly",
     long_description="Bypass Songkick's import hard limit by hitting the site directly",
     author='rattboi',
     author_email='rattboi@gmail.com', # Removed to limit spam harvesting.
-    url='http://github.com/rattboi/mopidy-subsonic/',
+    url='http://github.com/rattboi/sk-import/',
     package_data = {'': ['*.xml']},
     packages = find_packages(exclude="tests"),
     install_requires=[

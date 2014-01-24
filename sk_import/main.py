@@ -7,34 +7,17 @@ import getpass
 import json
 import os
 
-__version__ = '0.11'
+__version__ = '0.2'
 
 songkick_base_url = "https://www.songkick.com"
-basesessionurl    = "https://www.songkick.com/session/"
-newloginurl       = basesessionurl + "new"
-createloginurl    = basesessionurl + "create"
-basequerystring   = "https://www.songkick.com/search?page=1&per_page=10&type=artists&query="
+session_base_url  = songkick_base_url + "/session"
+new_login_url     = session_base_url  + "/new"
+create_login_url  = session_base_url  + "/create"
+query_base_url    = songkick_base_url + "/search?type=artists&query="
 
-ajax_headers = {'Content-Type':'application/json','Accept':'*/*','X-Requested-With':'XMLHttpRequest'}
-
-def get_artists(soup):
-    artist_names    = soup.select('li.artist > p.subject > a')
-    artist_tracking = soup.select('input.artist')
-    artist_form     = soup.select('li.artist > div > div > form')
-    return [(artist_names[i].text, 
-             artist_tracking[i].attrs['value'], 
-             artist_form[i].attrs['action'],
-             get_attrs(artist_form[i])) 
-             for i in range(len(artist_names))]
-
-def get_attrs(elem):
-    form_attrs = filter(lambda x: x.has_attr('name'), elem.select('input'))
-    return {x.attrs['name']: x.attrs['value'] for x in form_attrs}
-
-def track_artist(s, artist_to_track):
-    r = s.post(songkick_base_url + artist_to_track[2], 
-               data=json.dumps(artist_to_track[3]), 
-               headers=ajax_headers)
+ajax_headers = {'Content-Type':'application/json',
+                'Accept':'*/*',
+                'X-Requested-With':'XMLHttpRequest'}
 
 def levenshtein(a,b):
     "Calculates the Levenshtein distance between a and b."
@@ -56,13 +39,32 @@ def levenshtein(a,b):
 
     return current[n]
 
+def get_artists(soup):
+    artist_names    = soup.select('li.artist > p.subject > a')
+    artist_tracking = soup.select('input.artist')
+    artist_form     = soup.select('li.artist > div > div > form')
+    return [(artist_names[i].text,
+             artist_tracking[i].attrs['value'],
+             artist_form[i].attrs['action'],
+             get_attrs(artist_form[i]))
+             for i in range(len(artist_names))]
+
+def get_attrs(elem):
+    form_attrs = filter(lambda x: x.has_attr('name'), elem.select('input'))
+    return {x.attrs['name']: x.attrs['value'] for x in form_attrs}
+
+def track_artist(s, artist_to_track):
+    r = s.post(songkick_base_url + artist_to_track[2],
+               data=json.dumps(artist_to_track[3]),
+               headers=ajax_headers)
+
 def do_login(username, password):
     # create session for SongKick
     s = requests.session()
 
     # get initial login page to get authenticity token
     try:
-        r = s.get(newloginurl)
+        r = s.get(new_login_url)
     except:
         print("Couldn't get to login page")
         return None
@@ -84,7 +86,7 @@ def do_login(username, password):
                'persist': 'y',
                'commit': 'Log in'}
     try:
-        r = s.post(createloginurl, data=payload)
+        r = s.post(create_login_url, data=payload)
     except:
         print("Couldn't log in")
         return None
@@ -101,6 +103,9 @@ def search_for_artist(s, queryurl):
     artist_soup = BeautifulSoup(artistspage.content)
     return artist_soup
 
+def build_query(artist):
+    return query_base_url+ urllib.parse.quote(artist)
+
 def cleanup(s):
     return s.lower().replace('the ','',-1)
 
@@ -108,12 +113,12 @@ def attempt_to_track(s, artists, searchterm):
     distance = ""
     trackstatus = ""
     if len(artists) == 0:
-        trackstatus = "No Results" 
+        trackstatus = "No Results"
     else:
         distances = [levenshtein(cleanup(n),cleanup(searchterm)) for (n,t,u,attrs) in artists]
-        dist, idx = min((val, idx) for (idx, val) in enumerate(distances))
+        min_dist, idx = min((val, idx) for (idx, val) in enumerate(distances))
         #now we have the index of our most likely candidate. "Track it"
-        if dist < 10: #arbitrary number at the moment
+        if min_dist < 10: #arbitrary number at the moment
             if artists[idx][1] != 'Stop tracking':
                 track_artist(s, artists[idx])
                 trackstatus = "Added as {}".format(artists[idx][0])
@@ -121,14 +126,11 @@ def attempt_to_track(s, artists, searchterm):
                 trackstatus = "Already tracking as {}".format(artists[idx][0])
         else:
             trackstatus = "Skipping. Too dissimilar. Closest is {}".format(artists[idx][0])
-        distance = "Distance = {}".format(dist)
+        distance = "Distance = {}".format(min_dist)
     print("{0: <50} : {1: <70} : {2:}".format(searchterm, trackstatus, distance))
 
 def get_dirs(path):
     return [f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f)) and not f.startswith('.')]
-
-def build_query(artist):
-    return basequerystring + urllib.parse.quote(artist)
 
 def print_help():
     print("{0} v{1}".format(sys.argv[0],__version__))
